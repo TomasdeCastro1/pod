@@ -17,11 +17,16 @@
     "qr:inspect": "tsx scripts/qr-inspect.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.131.0",
     "@app/shared": "*",
     "@replit/object-storage": "^1.0.0",
     "drizzle-orm": "^0.45.3",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.4.0",
     "pg": "^8.23.1",
+    "resend": "^6.32.0",
     "sharp": "^0.35.5",
     "zod": "^4.6.5",
     "zxing-wasm": "^3.1.4"
@@ -29,6 +34,8 @@
   "devDependencies": {
     "@electric-sql/pglite": "^0.5.8",
     "@types/express": "^5.0.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/multer": "^2.3.0",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.11",
