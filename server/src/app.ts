@@ -1,7 +1,10 @@
 import express, { type ErrorRequestHandler, type Express } from 'express';
+import type { AuthLimits } from './auth/routes.js';
 import type { Config } from './config.js';
+import type { EmailSender } from './email/index.js';
 import type { Db } from './db/client.js';
 import type { ObjectStore } from './storage/index.js';
+import { authRouter, meRouter } from './auth/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
 
 export class HttpError extends Error {
@@ -19,6 +22,9 @@ export interface AppDeps {
   db: Db;
   store: ObjectStore;
   config: Config;
+  /** Opcionales, para tests: email falso y límites de /auth/*. */
+  email?: EmailSender;
+  authLimits?: Partial<AuthLimits>;
 }
 
 /** Sin `deps` solo monta las rutas que no necesitan base ni almacenamiento (tests). */
@@ -31,7 +37,11 @@ export function createApp(deps?: AppDeps): Express {
     res.json({ status: 'ok' });
   });
 
-  if (deps) app.use(filesRouter(deps));
+  if (deps) {
+    app.use(filesRouter(deps));
+    app.use('/auth', authRouter(deps));
+    app.use('/me', meRouter(deps));
+  }
 
   app.use((_req, _res, next) => {
     next(new HttpError(404, 'not_found', 'Ruta no encontrada'));

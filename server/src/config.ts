@@ -22,6 +22,7 @@ export const envSchema = z.object({
   PUBLIC_BASE_URL: optionalString,
   REVIEW_EMAIL: optionalString,
   REVIEW_CODE: optionalString,
+  EMAIL_FROM: z.preprocess(emptyToUndefined, z.string().default('onboarding@resend.dev')),
   EMAIL_DRIVER: z.preprocess(emptyToUndefined, z.enum(['resend', 'console']).default('console')),
 });
 
