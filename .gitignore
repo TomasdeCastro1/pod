@@ -1,0 +1,18 @@
+node_modules/
+.env
+.env.*
+!.env.example
+dist/
+build/
+coverage/
+*.tsbuildinfo
+.expo/
+.expo-shared/
+mobile/ios/
+mobile/android/
+*.log
+.DS_Store
+# local image storage (STORAGE_DRIVER=local)
+server/storage/
+server/.local-storage/
+.local-storage/

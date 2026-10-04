@@ -1,0 +1,17 @@
+{
+  "name": "@app/server",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:samples": "echo 'test:samples todavia no existe: lo crea T1.9' && exit 0"
+  },
+  "dependencies": {
+    "@app/shared": "*"
+  }
+}

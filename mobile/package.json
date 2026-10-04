@@ -1,0 +1,11 @@
+{
+  "name": "@app/mobile",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Placeholder: T3.1 creates the Expo app here.",
+  "scripts": {
+    "lint": "echo 'mobile: placeholder (T3.1)'",
+    "typecheck": "echo 'mobile: placeholder (T3.1)'",
+    "test": "echo 'mobile: placeholder (T3.1)'"
+  }
+}
