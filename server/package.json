@@ -12,7 +12,8 @@
     "test:samples": "echo 'test:samples todavia no existe: lo crea T1.9' && exit 0",
     "start": "tsx src/index.ts",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx src/db/migrate.ts"
+    "db:migrate": "tsx src/db/migrate.ts",
+    "qr:inspect": "tsx scripts/qr-inspect.ts"
   },
   "dependencies": {
     "@app/shared": "*",
