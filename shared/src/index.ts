@@ -4,3 +4,9 @@ export const APP_NAME = 'comprobantes';
 export function greet(name: string): string {
   return `Hola, ${name}`;
 }
+
+export * from './rut.js';
+export * from './numbers.js';
+export * from './dates.js';
+export * from './documents.js';
+export * from './pricing.js';
