@@ -30,6 +30,8 @@ export interface AppDeps {
 /** Sin `deps` solo monta las rutas que no necesitan base ni almacenamiento (tests). */
 export function createApp(deps?: AppDeps): Express {
   const app = express();
+  // Replit (and most hosts) sit behind one reverse proxy; needed for per-IP rate limits.
+  app.set('trust proxy', 1);
   app.disable('x-powered-by');
   app.use(express.json());
 
