@@ -18,7 +18,12 @@ import {
 
 export const roleEnum = pgEnum('role', ['admin', 'miembro']);
 export const scanStatusEnum = pgEnum('status', ['procesando', 'listo', 'revisar', 'error']);
-export const conformidadNivelEnum = pgEnum('conformidad_nivel', ['completa', 'firma_sola', 'dudosa', 'sin_firma']);
+export const conformidadNivelEnum = pgEnum('conformidad_nivel', [
+  'completa',
+  'firma_sola',
+  'dudosa',
+  'sin_firma',
+]);
 export const fieldSourceEnum = pgEnum('source', ['qr_o_ia', 'ia', 'qr']);
 
 const ts = (name: string) => timestamp(name, { withTimezone: true });
