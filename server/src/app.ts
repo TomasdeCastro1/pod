@@ -1,4 +1,8 @@
 import express, { type ErrorRequestHandler, type Express } from 'express';
+import type { Config } from './config.js';
+import type { Db } from './db/client.js';
+import type { ObjectStore } from './storage/index.js';
+import { filesRouter } from './storage/signedUrl.js';
 
 export class HttpError extends Error {
   readonly status: number;
@@ -11,7 +15,14 @@ export class HttpError extends Error {
   }
 }
 
-export function createApp(): Express {
+export interface AppDeps {
+  db: Db;
+  store: ObjectStore;
+  config: Config;
+}
+
+/** Sin `deps` solo monta las rutas que no necesitan base ni almacenamiento (tests). */
+export function createApp(deps?: AppDeps): Express {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json());
@@ -19,6 +30,8 @@ export function createApp(): Express {
   app.get('/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
+
+  if (deps) app.use(filesRouter(deps));
 
   app.use((_req, _res, next) => {
     next(new HttpError(404, 'not_found', 'Ruta no encontrada'));

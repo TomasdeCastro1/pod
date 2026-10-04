@@ -18,7 +18,7 @@ export const envSchema = z.object({
   MODEL_SECONDARY: z.preprocess(emptyToUndefined, z.string().default('claude-sonnet-5-5')),
   ROUTE_PAPER_RETURNS_TO_SECONDARY: z.preprocess(emptyToUndefined, boolFromString.default(false)),
   STORAGE_DRIVER: z.preprocess(emptyToUndefined, z.enum(['replit', 'local']).default('local')),
-  LOCAL_STORAGE_DIR: optionalString,
+  LOCAL_STORAGE_DIR: z.preprocess(emptyToUndefined, z.string().default('.storage')),
   PUBLIC_BASE_URL: optionalString,
   REVIEW_EMAIL: optionalString,
   REVIEW_CODE: optionalString,
