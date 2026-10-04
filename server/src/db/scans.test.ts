@@ -42,7 +42,7 @@ describe('esquema (PGlite)', () => {
         total: '123.45',
         extracted: { total: 123.45 },
         fieldsRequested: ['total'],
-        conformidadNivel: 'alto',
+        conformidadNivel: 'completa',
         clienteNombre: 'Cliente Prueba',
       })
       .returning();

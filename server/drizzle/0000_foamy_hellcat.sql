@@ -1,5 +1,5 @@
-CREATE TYPE "public"."conformidad_nivel" AS ENUM('alto', 'medio', 'bajo');--> statement-breakpoint
-CREATE TYPE "public"."source" AS ENUM('qr_o_ia', 'ia');--> statement-breakpoint
+CREATE TYPE "public"."conformidad_nivel" AS ENUM('completa', 'firma_sola', 'dudosa', 'sin_firma');--> statement-breakpoint
+CREATE TYPE "public"."source" AS ENUM('qr_o_ia', 'ia', 'qr');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('admin', 'miembro');--> statement-breakpoint
 CREATE TYPE "public"."status" AS ENUM('procesando', 'listo', 'revisar', 'error');--> statement-breakpoint
 CREATE TABLE "audit_log" (

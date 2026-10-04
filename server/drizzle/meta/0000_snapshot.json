@@ -1,5 +1,5 @@
 {
-  "id": "9622b514-19f8-4f8c-b590-029ab5ea0d61",
+  "id": "5cad36e3-dfe7-4246-8905-a71f467870c0",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -53,8 +53,12 @@
           "name": "audit_log_company_id_companies_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "companies",
-          "columnsFrom": ["company_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -62,8 +66,12 @@
           "name": "audit_log_user_id_users_id_fk",
           "tableFrom": "audit_log",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -178,8 +186,12 @@
           "name": "company_fields_company_id_companies_id_fk",
           "tableFrom": "company_fields",
           "tableTo": "companies",
-          "columnsFrom": ["company_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -187,8 +199,12 @@
           "name": "company_fields_field_key_field_catalog_key_fk",
           "tableFrom": "company_fields",
           "tableTo": "field_catalog",
-          "columnsFrom": ["field_key"],
-          "columnsTo": ["key"],
+          "columnsFrom": [
+            "field_key"
+          ],
+          "columnsTo": [
+            "key"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -196,8 +212,12 @@
           "name": "company_fields_updated_by_users_id_fk",
           "tableFrom": "company_fields",
           "tableTo": "users",
-          "columnsFrom": ["updated_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "updated_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -205,7 +225,10 @@
       "compositePrimaryKeys": {
         "company_fields_company_id_field_key_pk": {
           "name": "company_fields_company_id_field_key_pk",
-          "columns": ["company_id", "field_key"]
+          "columns": [
+            "company_id",
+            "field_key"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -346,8 +369,12 @@
           "name": "memberships_user_id_users_id_fk",
           "tableFrom": "memberships",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -355,8 +382,12 @@
           "name": "memberships_company_id_companies_id_fk",
           "tableFrom": "memberships",
           "tableTo": "companies",
-          "columnsFrom": ["company_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -364,7 +395,10 @@
       "compositePrimaryKeys": {
         "memberships_user_id_company_id_pk": {
           "name": "memberships_user_id_company_id_pk",
-          "columns": ["user_id", "company_id"]
+          "columns": [
+            "user_id",
+            "company_id"
+          ]
         }
       },
       "uniqueConstraints": {},
@@ -825,8 +859,12 @@
           "name": "scans_company_id_companies_id_fk",
           "tableFrom": "scans",
           "tableTo": "companies",
-          "columnsFrom": ["company_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "company_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -834,8 +872,12 @@
           "name": "scans_user_id_users_id_fk",
           "tableFrom": "scans",
           "tableTo": "users",
-          "columnsFrom": ["user_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -843,8 +885,12 @@
           "name": "scans_replaces_scan_id_scans_id_fk",
           "tableFrom": "scans",
           "tableTo": "scans",
-          "columnsFrom": ["replaces_scan_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "replaces_scan_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         },
@@ -852,8 +898,12 @@
           "name": "scans_reviewed_by_users_id_fk",
           "tableFrom": "scans",
           "tableTo": "users",
-          "columnsFrom": ["reviewed_by"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "reviewed_by"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "no action",
           "onUpdate": "no action"
         }
@@ -908,7 +958,9 @@
         "users_email_unique": {
           "name": "users_email_unique",
           "nullsNotDistinct": false,
-          "columns": ["email"]
+          "columns": [
+            "email"
+          ]
         }
       },
       "policies": {},
@@ -920,22 +972,39 @@
     "public.conformidad_nivel": {
       "name": "conformidad_nivel",
       "schema": "public",
-      "values": ["alto", "medio", "bajo"]
+      "values": [
+        "completa",
+        "firma_sola",
+        "dudosa",
+        "sin_firma"
+      ]
     },
     "public.source": {
       "name": "source",
       "schema": "public",
-      "values": ["qr_o_ia", "ia"]
+      "values": [
+        "qr_o_ia",
+        "ia",
+        "qr"
+      ]
     },
     "public.role": {
       "name": "role",
       "schema": "public",
-      "values": ["admin", "miembro"]
+      "values": [
+        "admin",
+        "miembro"
+      ]
     },
     "public.status": {
       "name": "status",
       "schema": "public",
-      "values": ["procesando", "listo", "revisar", "error"]
+      "values": [
+        "procesando",
+        "listo",
+        "revisar",
+        "error"
+      ]
     }
   },
   "schemas": {},
