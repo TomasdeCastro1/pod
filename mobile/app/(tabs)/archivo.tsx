@@ -4,6 +4,7 @@ import { useIsFocused, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Pressable,
   RefreshControl,
@@ -16,6 +17,7 @@ import {
 import { api } from '../../src/api/client';
 import { errorMessage } from '../../src/api/errorMessage';
 import { ArchiveRow } from '../../src/archive/ArchiveRow';
+import { shareCsv } from '../../src/archive/files';
 import { FilterSheet } from '../../src/archive/FilterSheet';
 import {
   activeChips,
@@ -84,6 +86,20 @@ export default function ArchivoScreen() {
     void queryClient.invalidateQueries({ queryKey: ['scans', companyId] });
   }, [queryClient, companyId]);
 
+  const [exporting, setExporting] = useState(false);
+  const exportCsv = async () => {
+    if (!companyId) return;
+    setExporting(true);
+    try {
+      // Exactamente lo que está filtrado en la lista.
+      await shareCsv(companyId, filtersToQuery(filters));
+    } catch (e) {
+      Alert.alert('No se pudo exportar', errorMessage(e));
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = async () => {
     setRefreshing(true);
@@ -124,6 +140,19 @@ export default function ArchivoScreen() {
             </Pressable>
           ) : null}
         </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Exportar a CSV"
+          onPress={() => void exportCsv()}
+          disabled={exporting || !companyId}
+          style={[styles.filterBtn, (exporting || !companyId) && { opacity: 0.5 }]}
+        >
+          {exporting ? (
+            <ActivityIndicator color={colors.primary} />
+          ) : (
+            <Ionicons name="share-outline" size={22} color={colors.primary} />
+          )}
+        </Pressable>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Filtros"
