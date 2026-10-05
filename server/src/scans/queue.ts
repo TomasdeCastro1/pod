@@ -82,3 +82,29 @@ export async function recoverStuckScans(
   for (const r of rows) queue.enqueue(r.id);
   return rows.length;
 }
+
+export const RECOVERY_INTERVAL_MS = 5 * 60 * 1000;
+
+/**
+ * Re-checks for hanging scans every 5 minutes (the queue ignores ids it already holds, so a scan
+ * that is just slow is not duplicated). Returns a function that stops the timer.
+ */
+export function startPeriodicRecovery(
+  db: AnyDb,
+  queue: ScanQueue,
+  opts: {
+    intervalMs?: number;
+    onRecovered?: (n: number) => void;
+    onError?: (err: unknown) => void;
+  } = {},
+): () => void {
+  const timer = setInterval(() => {
+    recoverStuckScans(db, queue)
+      .then((n) => {
+        if (n > 0) opts.onRecovered?.(n);
+      })
+      .catch((err: unknown) => opts.onError?.(err));
+  }, opts.intervalMs ?? RECOVERY_INTERVAL_MS);
+  timer.unref();
+  return () => clearInterval(timer);
+}

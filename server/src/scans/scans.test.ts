@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { eq } from 'drizzle-orm';
 import sharp from 'sharp';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { prepareZXingModule, writeBarcode } from 'zxing-wasm/writer';
 import type { ModelClient } from '../ai/client.js';
 import { companies, companyFields, memberships, modelPrices, scans, users } from '../db/schema.js';
@@ -16,7 +16,7 @@ import { LocalStore } from '../storage/index.js';
 import { createScan } from './create.js';
 import { isBillable } from './billing.js';
 import { processScan, type PipelineDeps } from './process.js';
-import { createScanQueue, recoverStuckScans } from './queue.js';
+import { createScanQueue, recoverStuckScans, startPeriodicRecovery } from './queue.js';
 
 const COMPANY_RUT = '219419590017';
 const QR_URL = `https://www.efactura.dgi.gub.uy/consultaQR/cfe?${COMPANY_RUT},111,A,6129,1727.91,24/09/2026,Zm9vYmFy`;
@@ -198,6 +198,25 @@ describe('pipeline de escaneo', () => {
     expect(await recoverStuckScans(t.db, t.queue)).toBe(1);
     await t.queue.idle();
     expect((await t.get(scanId)).status).toBe('listo');
+    await t.pg.close();
+  });
+
+  it('el chequeo periódico recupera escaneos colgados y se puede detener', async () => {
+    const t = await setup();
+    const { scanId } = await t.upload('periodic');
+    await t.queue.idle();
+    await t.db
+      .update(scans)
+      .set({ status: 'procesando', uploadedAt: new Date(Date.now() - 5 * 60_000) })
+      .where(eq(scans.id, scanId));
+    let recovered = 0;
+    const stop = startPeriodicRecovery(t.db, t.queue, {
+      intervalMs: 20,
+      onRecovered: (n) => (recovered += n),
+    });
+    await vi.waitFor(async () => expect((await t.get(scanId)).status).toBe('listo'));
+    stop();
+    expect(recovered).toBeGreaterThanOrEqual(1);
     await t.pg.close();
   });
 

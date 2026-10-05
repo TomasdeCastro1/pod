@@ -2,7 +2,8 @@ import { APP_NAME } from '@app/shared';
 import { createApp } from './app.js';
 import { loadConfig } from './config.js';
 import { createDb } from './db/client.js';
-import { startScanPipeline } from './scans/index.js';
+import { logger } from './logger.js';
+import { startPeriodicRecovery, startScanPipeline } from './scans/index.js';
 import { getStore } from './storage/index.js';
 
 export const SERVICE_NAME = `${APP_NAME}-server`;
@@ -14,14 +15,25 @@ export function start(): void {
   // The queue is created here (and hanging scans recovered, plan decision 2) before serving.
   void startScanPipeline({ db, store, config })
     .then(({ queue, recovered }) => {
-      if (recovered > 0) console.log(`${SERVICE_NAME}: ${recovered} escaneos re-encolados`);
+      if (recovered > 0) logger.info({ event: 'scans.recovered', count: recovered });
+      startPeriodicRecovery(db, queue, {
+        onRecovered: (count) => logger.info({ event: 'scans.recovered', count }),
+        onError: (err) =>
+          logger.error({
+            event: 'scans.recovery_failed',
+            error: err instanceof Error ? err.name : 'unknown',
+          }),
+      });
       const app = createApp({ db, store, config, scanQueue: queue });
       app.listen(config.PORT, () => {
-        console.log(`${SERVICE_NAME} escuchando en el puerto ${config.PORT}`);
+        logger.info({ event: 'server.listening', service: SERVICE_NAME, port: config.PORT });
       });
     })
     .catch((err: unknown) => {
-      console.error(`${SERVICE_NAME}: no se pudo iniciar`, err);
+      logger.fatal({
+        event: 'server.start_failed',
+        error: err instanceof Error ? err.name : 'unknown',
+      });
       process.exitCode = 1;
     });
 }

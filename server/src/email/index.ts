@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import type { Config } from '../config.js';
+import { logger } from '../logger.js';
 
 export interface EmailSender {
   sendCode(email: string, code: string): Promise<void>;
@@ -16,9 +17,10 @@ export function createConsoleSender(env: NodeJS.ProcessEnv = process.env): Email
   return {
     sendCode(_email, code) {
       if (env.NODE_ENV === 'development') {
-        console.log(`[email:console] código de acceso: ${code}`);
+        // Solo desarrollo local: es la única forma de ver el código sin servicio de email.
+        process.stdout.write(`[email:console] código de acceso: ${code}\n`);
       } else {
-        console.log('[email:console] código de acceso enviado');
+        logger.info({ event: 'email.code_sent' });
       }
       return Promise.resolve();
     },

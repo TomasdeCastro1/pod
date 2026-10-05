@@ -1,3 +1,4 @@
+import { logger } from '../logger.js';
 import { classifyFromQr, type DocType } from '@app/shared';
 import { eq } from 'drizzle-orm';
 import { buildPrompt, type QrData } from '../ai/buildPrompt.js';
@@ -27,7 +28,7 @@ const DEFAULT_RETRY_DELAYS = [1000, 4000];
 const ERROR_MESSAGE_AI = 'La IA no devolvió una respuesta válida';
 const ERROR_MESSAGE_GENERIC = 'No se pudo procesar la imagen';
 
-const defaultLog = (event: Record<string, unknown>) => console.log(JSON.stringify(event));
+const defaultLog = (event: Record<string, unknown>) => logger.info(event);
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 function str(v: unknown): string | null {

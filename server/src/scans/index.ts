@@ -8,7 +8,12 @@ import { createScanQueue, recoverStuckScans, type ScanQueue } from './queue.js';
 export { createScan, type CreateScanInput, type CreateScanResult } from './create.js';
 export { isBillable } from './billing.js';
 export { processScan, type PipelineDeps } from './process.js';
-export { createScanQueue, recoverStuckScans, type ScanQueue } from './queue.js';
+export {
+  createScanQueue,
+  recoverStuckScans,
+  startPeriodicRecovery,
+  type ScanQueue,
+} from './queue.js';
 
 /** Builds the queue wired to the real pipeline and re-queues scans left hanging by a restart. */
 export async function startScanPipeline(opts: {

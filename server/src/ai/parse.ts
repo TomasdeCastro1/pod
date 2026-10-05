@@ -1,3 +1,4 @@
+import { logger } from '../logger.js';
 import { z } from 'zod';
 
 export const TIPOS_DOCUMENTO = [
@@ -93,7 +94,7 @@ export function parseResponse(
   const known = new Set(Object.keys(schema.shape));
   const droppedKeys = Object.keys(cleaned).filter((k) => !known.has(k));
   if (droppedKeys.length > 0) {
-    console.debug(`[ai] claves extra descartadas: ${droppedKeys.join(', ')}`);
+    logger.debug({ event: 'ai.dropped_keys', keys: droppedKeys });
   }
   return { ok: true, data: parsed.data as ExtractedData, droppedKeys };
 }

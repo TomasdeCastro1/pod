@@ -1,4 +1,6 @@
+import { sql } from 'drizzle-orm';
 import express, { type ErrorRequestHandler, type Express } from 'express';
+import helmet from 'helmet';
 import type { AuthLimits } from './auth/routes.js';
 import type { CompanyLimits } from './companies/routes.js';
 import type { Config } from './config.js';
@@ -14,6 +16,7 @@ import { usageRouter } from './usage/routes.js';
 import { archiveRouter } from './archive/routes.js';
 import { scansRouter } from './scans/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
+import { logger } from './logger.js';
 
 export class HttpError extends Error {
   readonly status: number;
@@ -44,9 +47,25 @@ export function createApp(deps?: AppDeps): Express {
   // Replit está detrás de un proxy: sin esto el rate limit por IP vería una sola IP.
   app.set('trust proxy', 1);
   app.disable('x-powered-by');
+  // Encabezados de seguridad. CORS queda cerrado a propósito: no se monta `cors`, así que ningún
+  // navegador de otro origen puede leer respuestas (la app nativa no usa CORS).
+  app.use(helmet());
   app.use(express.json());
 
-  app.get('/health', (_req, res) => {
+  // Verifica la base sin exponer detalles: solo "ok" o "unavailable".
+  app.get('/health', async (_req, res) => {
+    if (deps) {
+      try {
+        await deps.db.execute(sql`select 1`);
+      } catch (err) {
+        logger.error({
+          event: 'health.db_failed',
+          error: err instanceof Error ? err.name : 'unknown',
+        });
+        res.status(503).json({ status: 'unavailable' });
+        return;
+      }
+    }
     res.json({ status: 'ok' });
   });
 
@@ -78,7 +97,7 @@ export function createApp(deps?: AppDeps): Express {
       return;
     }
     // No se loguea el cuerpo del request (puede tener datos personales).
-    console.error('Unhandled error:', err instanceof Error ? err.message : 'unknown');
+    logger.error({ event: 'http.unhandled', error: err instanceof Error ? err.name : 'unknown' });
     res.status(500).json({ error: { code: 'internal_error', message: 'Error interno' } });
   };
   app.use(errorHandler);
