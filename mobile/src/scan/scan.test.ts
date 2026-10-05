@@ -1,13 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanDto } from '@app/shared';
 import { ALERT_TEXTS, alertMessage, isBlockingAlert, pickAlert } from './alerts';
-import {
-  createCaptureManager,
-  isRetryableUploadError,
-  rescan,
-  resizeTarget,
-  type CaptureDeps,
-} from './manager';
+import { isRetryableUploadError, rescan, resizeTarget } from './manager';
 import { pollScan } from './polling';
 
 function dto(p: Partial<ScanDto> = {}): ScanDto {
@@ -109,114 +103,6 @@ describe('pollScan', () => {
   });
 });
 
-describe('createCaptureManager', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  function setup(over: Partial<CaptureDeps> = {}) {
-    let n = 0;
-    const deps: CaptureDeps = {
-      prepareImage: vi.fn(async (u: string) => `${u}.small`),
-      newId: () => `id-${++n}`,
-      getLocation: vi.fn(async () => ({ lat: -34.9, lng: -56.1 })),
-      upload: vi.fn(async () => ({ scan_id: 'scan-1', status: 'procesando' as const })),
-      getScan: vi.fn(async () => dto({ id: 'scan-1' })),
-      ...over,
-    };
-    return { deps, manager: createCaptureManager(deps) };
-  }
-
-  it('redimensiona, sube con el client_id y deja la tarjeta en done', async () => {
-    const { deps, manager } = setup();
-    manager.enqueueCapture({ companyId: 'c1', imageUri: 'file://a.jpg' });
-    expect(manager.getCaptures()[0]?.status).toBe('preparing');
-    await vi.advanceTimersByTimeAsync(0);
-    expect(deps.upload).toHaveBeenCalledWith(
-      'c1',
-      expect.objectContaining({
-        imageUri: 'file://a.jpg.small',
-        clientId: 'id-1',
-        lat: -34.9,
-        replacesScanId: undefined,
-      }),
-    );
-    expect(manager.getCaptures()[0]).toMatchObject({ status: 'done', scanId: 'scan-1' });
-  });
-
-  it('no espera más de 2 s por la ubicación', async () => {
-    const { deps, manager } = setup({ getLocation: () => new Promise(() => {}) });
-    manager.enqueueCapture({ companyId: 'c1', imageUri: 'x' });
-    await vi.advanceTimersByTimeAsync(1999);
-    expect(deps.upload).not.toHaveBeenCalled();
-    await vi.advanceTimersByTimeAsync(1);
-    expect(deps.upload).toHaveBeenCalledWith(
-      'c1',
-      expect.objectContaining({ lat: undefined, lng: undefined }),
-    );
-  });
-
-  it('reintenta la subida ante red o 5xx (Pendiente de envío) y no ante 4xx', async () => {
-    const upload = vi
-      .fn()
-      .mockRejectedValueOnce(Object.assign(new Error('x'), { status: 503 }))
-      .mockRejectedValueOnce(new Error('sin red'))
-      .mockResolvedValue({ scan_id: 'scan-1', status: 'procesando' });
-    const { manager } = setup({ upload });
-    manager.enqueueCapture({ companyId: 'c1', imageUri: 'x' });
-    await vi.advanceTimersByTimeAsync(2500);
-    expect(manager.getCaptures()[0]?.status).toBe('pending');
-    await vi.advanceTimersByTimeAsync(10_000);
-    expect(upload).toHaveBeenCalledTimes(3);
-    expect(manager.getCaptures()[0]?.status).toBe('done');
-
-    const bad = setup({
-      upload: vi.fn().mockRejectedValue(Object.assign(new Error('mal'), { status: 400 })),
-    });
-    bad.manager.enqueueCapture({ companyId: 'c1', imageUri: 'x' });
-    await vi.advanceTimersByTimeAsync(10_000);
-    expect(bad.manager.getCaptures()[0]).toMatchObject({ status: 'failed', error: 'mal' });
-    expect(bad.deps.upload).toHaveBeenCalledTimes(1);
-  });
-
-  it('pasa a timeout si el servidor sigue procesando 30 s', async () => {
-    const { manager } = setup({ getScan: async () => dto({ status: 'procesando' }) });
-    manager.enqueueCapture({ companyId: 'c1', imageUri: 'x' });
-    await vi.advanceTimersByTimeAsync(31_000);
-    expect(manager.getCaptures()[0]?.status).toBe('timeout');
-  });
-
-  it('«Volver a escanear» sube con replaces_scan_id', async () => {
-    const { deps, manager } = setup();
-    const item = await rescan(manager, async () => 'file://nueva.jpg', {
-      companyId: 'c1',
-      scanId: 'scan-viejo',
-    });
-    expect(item?.replacesScanId).toBe('scan-viejo');
-    await vi.advanceTimersByTimeAsync(0);
-    expect(deps.upload).toHaveBeenCalledWith(
-      'c1',
-      expect.objectContaining({ replacesScanId: 'scan-viejo' }),
-    );
-  });
-
-  it('si cancela el escáner, no sube nada', async () => {
-    const { deps, manager } = setup();
-    expect(await rescan(manager, async () => null, { companyId: 'c1', scanId: 's' })).toBeNull();
-    await vi.advanceTimersByTimeAsync(0);
-    expect(deps.upload).not.toHaveBeenCalled();
-  });
-
-  it('notifica a los suscriptores y permite descartar la alerta', async () => {
-    const { manager } = setup();
-    const l = vi.fn();
-    manager.subscribe(l);
-    const it = manager.enqueueCapture({ companyId: 'c1', imageUri: 'x' });
-    expect(l).toHaveBeenCalled();
-    manager.dismissAlert(it.clientId);
-    expect(manager.getCaptures()[0]?.alertDismissed).toBe(true);
-  });
-});
-
 describe('helpers', () => {
   it('resizeTarget achica a 1.600 px y no agranda', () => {
     expect(resizeTarget(3200, 2400)).toEqual({ width: 1600, height: 1200 });
@@ -227,5 +113,28 @@ describe('helpers', () => {
     expect(isRetryableUploadError(new Error('red'))).toBe(true);
     expect(isRetryableUploadError({ status: 500 })).toBe(true);
     expect(isRetryableUploadError({ status: 422 })).toBe(false);
+    expect(isRetryableUploadError({ status: 401 })).toBe(true);
+  });
+});
+
+describe('rescan', () => {
+  it('«Volver a escanear» encola con replaces_scan_id', async () => {
+    const enqueueCapture = vi.fn((i) => ({ ...i, clientId: 'x' }));
+    await rescan({ enqueueCapture }, async () => 'file://nueva.jpg', {
+      companyId: 'c1',
+      scanId: 'scan-viejo',
+    });
+    expect(enqueueCapture).toHaveBeenCalledWith({
+      companyId: 'c1',
+      imageUri: 'file://nueva.jpg',
+      replacesScanId: 'scan-viejo',
+    });
+  });
+  it('si cancela el escáner, no encola nada', async () => {
+    const enqueueCapture = vi.fn();
+    expect(
+      await rescan({ enqueueCapture }, async () => null, { companyId: 'c', scanId: 's' }),
+    ).toBeNull();
+    expect(enqueueCapture).not.toHaveBeenCalled();
   });
 });

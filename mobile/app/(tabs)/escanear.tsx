@@ -12,7 +12,9 @@ import {
   enqueueCapture,
   openScanner,
   useCaptures,
+  useIsOffline,
 } from '../../src/scan/capture';
+import { offlineNotice } from '../../src/queue/queue';
 import { rescan } from '../../src/scan/manager';
 import { ScanStrip } from '../../src/scan/ScanStrip';
 import { colors } from '../../src/theme';
@@ -21,6 +23,11 @@ export default function EscanearScreen() {
   const { activeCompany } = useAuth();
   const focused = useIsFocused();
   const items = useCaptures();
+  const offline = useIsOffline();
+  const notice = offlineNotice(
+    offline,
+    items.filter((it) => it.status === 'pending' || it.status === 'preparing').length,
+  );
   const [scanning, setScanning] = useState(false);
   const [paused, setPaused] = useState(false); // el repartidor cerró el escáner
   const [scannerError, setScannerError] = useState<string | null>(null);
@@ -114,6 +121,7 @@ export default function EscanearScreen() {
           </>
         )}
       </View>
+      {notice ? <Text style={styles.notice}>{notice}</Text> : null}
       <ScanStrip items={items} />
       <AlertModal
         kind={blocking}
@@ -128,5 +136,6 @@ const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 },
   hint: { fontSize: 17, color: colors.textMuted, textAlign: 'center' },
+  notice: { fontSize: 13, color: colors.textMuted, textAlign: 'center', paddingHorizontal: 16 },
   error: { fontSize: 16, color: '#C62828', textAlign: 'center' },
 });

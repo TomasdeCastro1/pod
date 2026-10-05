@@ -2,7 +2,9 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from 'react';
 import type { ApiUser, MeCompany, MeResponse } from '@app/shared';
 import * as SecureStore from 'expo-secure-store';
+import { Alert } from 'react-native';
 import { api, getToken, onUnauthorized, setToken } from '../api/client';
+import { discardPendingCaptures, pendingCaptureCount, startCaptureQueue } from '../scan/capture';
 import { pickActiveCompany, upsertCompany, type SessionStatus } from '../state/session';
 
 const ACTIVE_COMPANY_KEY = 'active_company_id';
@@ -79,6 +81,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    // Capturas sin enviar: se pierden al cerrar sesión, así que se pide confirmación.
+    const pending = pendingCaptureCount();
+    if (pending > 0) {
+      const ok = await new Promise<boolean>((resolve) =>
+        Alert.alert(
+          'Hay comprobantes sin enviar',
+          pending === 1
+            ? 'Tenés 1 comprobante que todavía no se envió. Si cerrás sesión se pierde.'
+            : `Tenés ${pending} comprobantes que todavía no se enviaron. Si cerrás sesión se pierden.`,
+          [
+            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+            { text: 'Cerrar sesión igual', style: 'destructive', onPress: () => resolve(true) },
+          ],
+          { cancelable: true, onDismiss: () => resolve(false) },
+        ),
+      );
+      if (!ok) return;
+    }
+    await discardPendingCaptures();
     await setToken(null);
     await Promise.all([writeActiveId(null), writeMeCache(null)]);
     setActiveId(null);
@@ -150,6 +171,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, [clear]);
+
+  // Con sesión iniciada se arranca la cola de capturas (procesa lo que quedó de la sesión anterior).
+  useEffect(() => {
+    if (status === 'signedIn') startCaptureQueue();
+  }, [status]);
 
   // Mantiene el caché local al día con cada cambio de usuario o empresas.
   useEffect(() => {

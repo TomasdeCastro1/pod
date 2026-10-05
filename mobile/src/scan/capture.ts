@@ -1,13 +1,19 @@
+import NetInfo, { useNetInfo } from '@react-native-community/netinfo';
 import { useSyncExternalStore } from 'react';
+import { AppState } from 'react-native';
 import * as Crypto from 'expo-crypto';
+import { Directory, File, Paths } from 'expo-file-system';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as Location from 'expo-location';
+import * as SQLite from 'expo-sqlite';
 import DocumentScanner, {
   ResponseType,
   ScanDocumentResponseStatus,
 } from 'react-native-document-scanner-plugin';
 import { api } from '../api/client';
-import { createCaptureManager, resizeTarget, type CaptureItem } from './manager';
+import { createCaptureQueue } from '../queue/queue';
+import { sqliteStore } from '../queue/sqliteStore';
+import { resizeTarget, type CaptureItem } from './manager';
 
 async function prepareImage(uri: string): Promise<string> {
   const ctx = ImageManipulator.manipulate(uri);
@@ -31,9 +37,31 @@ async function getLocation() {
   }
 }
 
-/** Instancia de la app. T6.1 la reemplaza por la cola persistente con la misma interfaz. */
-export const captures = createCaptureManager({
+/** Mueve la imagen a documentDirectory (el caché lo puede borrar el sistema). */
+async function persistFile(uri: string, clientId: string): Promise<string> {
+  const dir = new Directory(Paths.document, 'captures');
+  if (!dir.exists) dir.create({ intermediates: true, idempotent: true });
+  const dest = new File(dir, `${clientId}.jpg`);
+  const src = new File(uri);
+  try {
+    src.move(dest);
+  } catch {
+    src.copy(dest);
+  }
+  return dest.uri;
+}
+
+async function deleteFile(uri: string): Promise<void> {
+  const f = new File(uri);
+  if (f.exists) f.delete();
+}
+
+/** Cola persistente de capturas (SQLite + archivos en documentDirectory). */
+export const captures = createCaptureQueue({
+  store: sqliteStore(() => SQLite.openDatabaseAsync('captures.db')),
   prepareImage,
+  persistFile,
+  deleteFile,
   newId: () => Crypto.randomUUID(),
   getLocation,
   upload: (companyId, p) => api.scans.upload(companyId, p),
@@ -42,6 +70,33 @@ export const captures = createCaptureManager({
 
 export const enqueueCapture = captures.enqueueCapture;
 export const dismissAlert = captures.dismissAlert;
+
+let started = false;
+/**
+ * Arranca la cola: procesa lo que quedó de la sesión anterior y engancha los disparadores
+ * (vuelve la conexión, la app vuelve a primer plano). Se llama una vez, con sesión iniciada.
+ */
+export function startCaptureQueue(): void {
+  if (started) return;
+  started = true;
+  void captures.start();
+  NetInfo.addEventListener((s) => {
+    if (s.isConnected && s.isInternetReachable !== false) captures.kick(true);
+  });
+  AppState.addEventListener('change', (st) => {
+    if (st === 'active') captures.kick(true);
+  });
+}
+
+/** Cantidad de capturas que todavía no llegaron al servidor. */
+export const pendingCaptureCount = captures.pendingCount;
+export const discardPendingCaptures = captures.clearAll;
+
+/** true cuando NetInfo sabe que no hay conexión. */
+export function useIsOffline(): boolean {
+  const s = useNetInfo();
+  return s.isConnected === false || s.isInternetReachable === false;
+}
 
 export function useCaptures(): CaptureItem[] {
   return useSyncExternalStore(captures.subscribe, captures.getCaptures);
