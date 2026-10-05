@@ -6,7 +6,7 @@ App móvil (Expo) + backend Node.js que escanea comprobantes firmados (facturas 
 
 ```
 server/    Backend Node.js + TypeScript + Express (ESM)
-mobile/    App Expo (placeholder hasta T3.1)
+mobile/    App Expo (SDK 57, Expo Router, TypeScript)
 shared/    TypeScript compartido (@app/shared): tipos, claves de campos, RUT, precio
 samples/   Fotos de prueba 01.jpg … 11.jpg + expected.json (lo crea T1.9)
 docs/      Especificación y plan
