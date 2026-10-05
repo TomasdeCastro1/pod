@@ -25,4 +25,9 @@ export default tseslint.config(
     },
     rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
+  {
+    // Scripts .mjs que corren directo en Node.
+    files: ['**/*.mjs'],
+    languageOptions: { globals: { URL: 'readonly', process: 'readonly', console: 'readonly' } },
+  },
 );
