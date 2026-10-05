@@ -7,7 +7,7 @@ Las marcas **[Confirmar en Replit]** indican datos de la configuración que no s
 ## Qué trae el repositorio
 
 - `.replit` y `replit.nix` en la raíz.
-  - Run (desarrollo en el Workspace): `node server/dist/index.js`.
+  - Run (desarrollo en el Workspace): instala dependencias si faltan, compila, migra, carga el catálogo y arranca `node server/dist/index.js`. Así un cambio hecho en Replit se ve al tocar Run.
   - Deployment: `deploymentTarget = "gce"` (Reserved VM). Build: `npm ci && npm run build -w server && npm run db:migrate:prod -w server && npm run db:seed:prod -w server`. Run: `node server/dist/index.js`.
   - Puerto: el servidor escucha en `PORT` (3000 por defecto); en el deploy Replit lo inyecta. `[[ports]]` mapea 3000 al 80 externo para el Workspace.
 - `npm run build -w server`: compila con esbuild (`server/scripts/build.mjs`) a `server/dist`. Cada entrada es un bundle propio; las dependencias de `node_modules` quedan externas (por eso el build corre `npm ci` primero) y `@app/shared`, que se publica como fuente `.ts`, se incluye dentro del bundle. Se eligió esbuild y no `tsc` porque `tsc` no resuelve `@app/shared` (fuente TS sin build) sin reestructurar el monorepo; el chequeo de tipos sigue siendo `npm run typecheck`.

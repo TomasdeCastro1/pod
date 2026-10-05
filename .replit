@@ -1,7 +1,8 @@
 # Configuración de Replit para el backend (staging/producción). Ver docs/deploy.md.
 # Francisco debe confirmar en la interfaz de Replit lo marcado en docs/deploy.md.
 modules = ["nodejs-20"]
-run = "node server/dist/index.js"
+# Run del Workspace: instala si falta, compila, migra y arranca, así cada cambio hecho en Replit se ve al tocar Run.
+run = "[ -d node_modules ] || npm ci; npm run build -w server && npm run db:migrate:prod -w server && npm run db:seed:prod -w server && node server/dist/index.js"
 
 [nix]
 channel = "stable-24_05"
