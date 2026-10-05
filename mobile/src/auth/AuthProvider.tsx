@@ -62,7 +62,11 @@ interface AuthState {
   /** Actualiza los datos de una empresa ya conocida (nombre, RUT, rol). */
   updateCompany: (company: MeCompany) => void;
   signIn: (token: string, user: ApiUser, companies: MeCompany[]) => Promise<void>;
-  signOut: () => Promise<void>;
+  /**
+   * Cierra la sesión. Con capturas sin enviar avisa que se pierden (salvo `discardPending`,
+   * por ejemplo al eliminar la cuenta, donde ya se confirmó).
+   */
+  signOut: (opts?: { discardPending?: boolean }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -80,31 +84,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void writeMeCache(null);
   }, []);
 
-  const signOut = useCallback(async () => {
-    // Capturas sin enviar: se pierden al cerrar sesión, así que se pide confirmación.
-    const pending = pendingCaptureCount();
-    if (pending > 0) {
-      const ok = await new Promise<boolean>((resolve) =>
-        Alert.alert(
-          'Hay comprobantes sin enviar',
-          pending === 1
-            ? 'Tenés 1 comprobante que todavía no se envió. Si cerrás sesión se pierde.'
-            : `Tenés ${pending} comprobantes que todavía no se enviaron. Si cerrás sesión se pierden.`,
-          [
-            { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
-            { text: 'Cerrar sesión igual', style: 'destructive', onPress: () => resolve(true) },
-          ],
-          { cancelable: true, onDismiss: () => resolve(false) },
-        ),
-      );
-      if (!ok) return;
-    }
-    await discardPendingCaptures();
-    await setToken(null);
-    await Promise.all([writeActiveId(null), writeMeCache(null)]);
-    setActiveId(null);
-    clear();
-  }, [clear]);
+  const signOut = useCallback(
+    async (opts?: { discardPending?: boolean }) => {
+      // Capturas sin enviar: se pierden al cerrar sesión, así que se pide confirmación.
+      const pending = opts?.discardPending ? 0 : pendingCaptureCount();
+      if (pending > 0) {
+        const ok = await new Promise<boolean>((resolve) =>
+          Alert.alert(
+            'Hay comprobantes sin enviar',
+            pending === 1
+              ? 'Tenés 1 comprobante que todavía no se envió. Si cerrás sesión se pierde.'
+              : `Tenés ${pending} comprobantes que todavía no se enviaron. Si cerrás sesión se pierden.`,
+            [
+              { text: 'Cancelar', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Cerrar sesión igual', style: 'destructive', onPress: () => resolve(true) },
+            ],
+            { cancelable: true, onDismiss: () => resolve(false) },
+          ),
+        );
+        if (!ok) return;
+      }
+      await discardPendingCaptures();
+      await setToken(null);
+      await Promise.all([writeActiveId(null), writeMeCache(null)]);
+      setActiveId(null);
+      clear();
+    },
+    [clear],
+  );
 
   const setActiveCompanyId = useCallback((id: string) => {
     setActiveId(id);

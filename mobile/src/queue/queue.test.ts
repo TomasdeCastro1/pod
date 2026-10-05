@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ScanDto } from '@app/shared';
-import { backoffMs, createCaptureQueue, offlineNotice, type QueueDeps } from './queue';
+import { backoffMs, createCaptureQueue, offlineNotice, thumbUri, type QueueDeps } from './queue';
 import { sqliteStore, type SqlDb } from './sqliteStore';
 import type { CaptureRow, CaptureStore } from './types';
 
@@ -125,6 +125,27 @@ describe('cola de capturas', () => {
     expect(queue.getCaptures()[0]).toMatchObject({ status: 'done', scanId: 'scan-1' });
     expect(deps.deleteFile).toHaveBeenCalledWith(`file:///captures/${it.clientId}.jpg`);
     expect(store.rows[0]).toMatchObject({ state: 'subido', scan_id: 'scan-1', file_uri: '' });
+  });
+
+  it('al terminar usa la miniatura del servidor porque el archivo local se borró', async () => {
+    const { queue } = setup({
+      getScan: vi.fn(async () => dto({ thumb_url: 'https://cdn/thumb.jpg' })),
+    });
+    queue.enqueueCapture({ companyId: 'c1', imageUri: 'file://a.jpg' });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(queue.getCaptures()[0]).toMatchObject({
+      status: 'done',
+      uri: 'https://cdn/thumb.jpg',
+    });
+  });
+
+  it('thumbUri: local si existe, si no thumb_url del servidor', () => {
+    const scan = dto({ thumb_url: 'https://cdn/t.jpg' });
+    expect(thumbUri('file:///a.jpg', scan)).toBe('file:///a.jpg');
+    expect(thumbUri('file:///a.jpg', scan, false)).toBe('https://cdn/t.jpg');
+    expect(thumbUri('', scan)).toBe('https://cdn/t.jpg');
+    expect(thumbUri('', dto())).toBe('');
+    expect(thumbUri('', undefined, false)).toBe('');
   });
 
   it('no espera más de 2 s por la ubicación', async () => {

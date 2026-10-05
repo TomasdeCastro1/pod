@@ -4,6 +4,7 @@ import { Alert, Linking } from 'react-native';
 import { api, getApiBaseUrl } from '../../../src/api/client';
 import { errorMessage } from '../../../src/api/errorMessage';
 import { useAuth } from '../../../src/auth/AuthProvider';
+import { pendingCaptureCount } from '../../../src/scan/capture';
 import { CompanyList } from '../../../src/components/CompanyList';
 import { Button, ErrorText, Field } from '../../../src/components/ui';
 import { Card, Divider, Page, Row, SectionTitle } from '../../../src/profile/ui';
@@ -33,6 +34,11 @@ export default function PerfilScreen() {
   }
 
   function confirmSignOut() {
+    // Con capturas sin enviar, signOut ya avisa que se pierden: ese aviso reemplaza a este.
+    if (pendingCaptureCount() > 0) {
+      void signOut();
+      return;
+    }
     Alert.alert('Cerrar sesión', '¿Querés cerrar la sesión en este celular?', [
       { text: 'Cancelar', style: 'cancel' },
       { text: 'Cerrar sesión', style: 'destructive', onPress: () => void signOut() },
@@ -95,8 +101,11 @@ export default function PerfilScreen() {
 
       <SectionTitle>Cuenta</SectionTitle>
       <Button title="Cerrar sesión" variant="secondary" onPress={confirmSignOut} />
-      {/* TODO(T6.2): la lógica de eliminar cuenta la hace T6.2; por ahora el botón queda deshabilitado. */}
-      <Button title="Eliminar cuenta" variant="link" disabled onPress={() => {}} />
+      <Button
+        title="Eliminar cuenta"
+        variant="link"
+        onPress={() => router.push('/perfil/eliminar-cuenta')}
+      />
 
       <Card>
         <Row

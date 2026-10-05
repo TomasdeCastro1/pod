@@ -24,9 +24,17 @@ const TOKEN_KEY = 'auth_token';
 export class ApiError extends Error {
   readonly status: number;
   readonly code: string;
+  /** Empresas donde bloquea la acción (409 `last_admin` de DELETE /me). */
+  readonly companies?: Array<{ id: string; nombre: string }>;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    companies?: Array<{ id: string; nombre: string }>,
+  ) {
     super(message);
+    this.companies = companies;
     this.name = 'ApiError';
     this.status = status;
     this.code = code;
@@ -132,11 +140,16 @@ async function request<T>(method: string, path: string, opts: RequestOptions = {
   }
 
   if (!res.ok) {
-    const e = (data as Partial<ApiErrorBody> | undefined)?.error;
+    const e = (data as Partial<ApiErrorBody> | undefined)?.error as
+      (Partial<ApiErrorBody['error']> & { companies?: unknown }) | undefined;
+    const companies = Array.isArray(e?.companies)
+      ? (e.companies as Array<{ id: string; nombre: string }>)
+      : undefined;
     const err = new ApiError(
       res.status,
       e?.code ?? 'http_error',
       e?.message ?? `Error ${res.status}`,
+      companies,
     );
     // 401 con sesión: el token venció o es inválido. Los de login (auth: false) no cuentan.
     if (res.status === 401 && useAuth && token) {
@@ -160,6 +173,8 @@ export const api = {
   me: {
     get: () => request<MeResponse>('GET', '/me'),
     update: (nombre: string) => request<MeResponse>('PATCH', '/me', { json: { nombre } }),
+    /** Elimina la cuenta (204). 409 `last_admin` con `companies` si es el único admin de alguna. */
+    remove: () => request<void>('DELETE', '/me'),
   },
   companies: {
     list: () => request<{ companies: Company[] }>('GET', '/companies'),

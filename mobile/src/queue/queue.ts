@@ -16,6 +16,12 @@ export const BACKOFF_MAX_MS = 5 * 60_000;
 /** Las capturas fallidas (4xx) se muestran un día y después se descartan. */
 export const FAILED_TTL_MS = 24 * 3600_000;
 
+/** Miniatura de una captura: la imagen local mientras exista; si no, la `thumb_url` del servidor. */
+export function thumbUri(localUri: string, scan: ScanDto | null | undefined, localExists = true) {
+  if (localExists && localUri) return localUri;
+  return scan?.thumb_url ?? '';
+}
+
 /** 2 s, 4 s, 8 s… con tope de 5 min. `attempts` cuenta el intento que acaba de fallar. */
 export function backoffMs(attempts: number): number {
   return Math.min(BACKOFF_BASE_MS * 2 ** Math.max(0, attempts - 1), BACKOFF_MAX_MS);
@@ -87,12 +93,15 @@ export function createCaptureQueue(deps: QueueDeps) {
     patchItem(clientId, { status: 'done', scan });
     const uri = rows.get(clientId)?.file_uri;
     if (uri) {
+      let deleted = true;
       try {
         await deps.deleteFile(uri);
       } catch {
-        // Queda un archivo suelto; no afecta al escaneo.
+        deleted = false; // Queda un archivo suelto; no afecta al escaneo.
       }
       await setRow(clientId, { file_uri: '' });
+      // El archivo local ya no está: la miniatura pasa a ser la del servidor.
+      if (deleted) patchItem(clientId, { uri: thumbUri(uri, scan, false) });
     }
   }
 

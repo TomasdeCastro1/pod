@@ -1,11 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CONFORMIDAD_COLORS, CONFORMIDAD_LABELS, colors } from '../theme';
 import { docTypeLabel, formatTotal, isConformidad, pickAlert } from './alerts';
+import { thumbUri } from '../queue/queue';
 import type { CaptureItem } from './manager';
 
 function Card({ item }: { item: CaptureItem }) {
   const scan = item.scan;
+  const [fallback, setFallback] = useState(false);
   const conf = scan && isConformidad(scan.conformidad_nivel) ? scan.conformidad_nivel : null;
   const alert = scan ? pickAlert(scan) : null;
 
@@ -20,7 +23,12 @@ function Card({ item }: { item: CaptureItem }) {
 
   return (
     <View style={styles.card} accessibilityRole="summary">
-      <Image source={{ uri: item.uri }} style={styles.thumb} />
+      <Image
+        source={{ uri: (fallback ? thumbUri('', scan) : thumbUri(item.uri, scan)) || undefined }}
+        style={styles.thumb}
+        // Si el archivo local ya no existe, se usa la miniatura del servidor.
+        onError={() => scan?.thumb_url && setFallback(true)}
+      />
       <View style={styles.info}>
         {status || !scan ? (
           <Text style={styles.status} numberOfLines={2}>
