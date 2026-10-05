@@ -53,6 +53,12 @@ interface AuthState {
   setActiveCompanyId: (id: string) => void;
   /** Suma (o actualiza) una empresa recién creada o unida y la deja activa. */
   addCompany: (company: MeCompany) => void;
+  /** Vuelve a pedir /me (usuario y empresas). */
+  refresh: () => Promise<void>;
+  /** Reemplaza el usuario (por ejemplo tras cambiar el nombre). */
+  setUser: (user: ApiUser) => void;
+  /** Actualiza los datos de una empresa ya conocida (nombre, RUT, rol). */
+  updateCompany: (company: MeCompany) => void;
   signIn: (token: string, user: ApiUser, companies: MeCompany[]) => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -91,6 +97,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     [setActiveCompanyId],
   );
+
+  const refresh = useCallback(async () => {
+    const me = await api.me.get();
+    setUser(me.user);
+    setCompanies(me.companies);
+  }, []);
+
+  const updateCompany = useCallback((company: MeCompany) => {
+    setCompanies((prev) => upsertCompany(prev, company));
+  }, []);
 
   const signIn = useCallback(async (token: string, u: ApiUser, c: MeCompany[]) => {
     await setToken(token);
@@ -148,10 +164,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       activeCompany: pickActiveCompany(companies, activeId),
       setActiveCompanyId,
       addCompany,
+      refresh,
+      setUser,
+      updateCompany,
       signIn,
       signOut,
     }),
-    [status, user, companies, activeId, setActiveCompanyId, addCompany, signIn, signOut],
+    [
+      status,
+      user,
+      companies,
+      activeId,
+      setActiveCompanyId,
+      addCompany,
+      refresh,
+      updateCompany,
+      signIn,
+      signOut,
+    ],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
