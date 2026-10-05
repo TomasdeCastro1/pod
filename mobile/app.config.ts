@@ -10,6 +10,9 @@ const config: ExpoConfig = {
   version: '0.1.0',
   orientation: 'portrait',
   userInterfaceStyle: 'light',
+  // Provisorios, generados con `node mobile/scripts/generate-icons.mjs` (ver docs/store/iconos.md).
+  // Splash: falta instalar expo-splash-screen y registrar el plugin (instrucciones en ese documento).
+  icon: './assets/icon.png',
   ios: {
     bundleIdentifier: APP_ID,
     supportsTablet: false,
@@ -19,6 +22,13 @@ const config: ExpoConfig = {
   },
   android: {
     package: APP_ID,
+    adaptiveIcon: {
+      foregroundImage: './assets/adaptive-icon.png',
+      backgroundColor: '#1F4E79',
+    },
+  },
+  web: {
+    favicon: './assets/favicon.png',
   },
   plugins: [
     'expo-router',

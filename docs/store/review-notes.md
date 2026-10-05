@@ -29,3 +29,15 @@ Texto para pegar en «Notas de revisión» (Apple) y «Instrucciones de acceso»
 
 - Para restaurar la cuenta de revisión después de que un revisor la elimine, volver a correr `npm run seed:review -w server` (crea un usuario nuevo con el mismo email).
 - La política de privacidad y los términos están en `/legal/privacidad` y `/legal/terminos` del backend; son borradores y hay que completarlos y revisarlos antes de enviar (T6.4 usa esas URLs).
+
+## Acceso para Google Play (App access)
+
+En «Acceso a la app» elegir «Todo o algunas funciones están restringidas» y cargar las mismas credenciales (email y código de revisión) con la instrucción: «Ingresar con el email, escribir el código fijo en la pantalla de código. No se recibe ningún email.»
+
+## Declaraciones de pagos y modelo de negocio
+
+- **Apple, pregunta sobre compras/suscripciones:** la app no ofrece compras dentro de la app. Si el revisor pregunta (guideline 3.1.1 / 3.1.3), responder que es un servicio para empresas que se contrata y factura por fuera de la app, y que la app no muestra botones, enlaces ni textos que inviten a pagar. El argumento está desarrollado en `guideline-3.1.3.md` (interpretación pendiente de decisión de Francisco).
+- **Google Play:** declarar que la app no tiene compras dentro de la app y no contiene anuncios.
+- La pantalla «Uso y precio» del Perfil solo informa el consumo y el importe estimado, con la leyenda «El importe se factura una vez por mes, por fuera de la app». No tiene ningún botón de pago.
+- **Permisos:** cámara (escanear comprobantes) y ubicación opcional (registrar dónde se fotografió). Ambos con texto explicativo en español.
+- **Cifrado (exportación):** `ITSAppUsesNonExemptEncryption` está en `false` (solo HTTPS estándar).
