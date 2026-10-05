@@ -35,3 +35,4 @@ export async function startScanPipeline(opts: {
   const recovered = await recoverStuckScans(opts.db, queue);
   return { queue, recovered };
 }
+export { toScanDto } from './dto.js';

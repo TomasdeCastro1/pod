@@ -4,12 +4,14 @@ import type { CompanyLimits } from './companies/routes.js';
 import type { Config } from './config.js';
 import type { EmailSender } from './email/index.js';
 import type { Db } from './db/client.js';
+import type { ScanQueue } from './scans/index.js';
 import type { ObjectStore } from './storage/index.js';
 import { authRouter, meRouter } from './auth/routes.js';
 import { companiesRouter } from './companies/routes.js';
 import { adminRouter } from './admin/routes.js';
 import { fieldsRouter } from './fields/routes.js';
 import { usageRouter } from './usage/routes.js';
+import { scansRouter } from './scans/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
 
 export class HttpError extends Error {
@@ -31,6 +33,8 @@ export interface AppDeps {
   email?: EmailSender;
   authLimits?: Partial<AuthLimits>;
   companyLimits?: Partial<CompanyLimits>;
+  /** Cola de procesamiento de escaneos; la usa la ruta de subida. */
+  scanQueue?: ScanQueue;
 }
 
 /** Sin `deps` solo monta las rutas que no necesitan base ni almacenamiento (tests). */
@@ -52,6 +56,7 @@ export function createApp(deps?: AppDeps): Express {
     app.use('/companies', companiesRouter(deps));
     app.use('/companies', fieldsRouter(deps));
     app.use('/companies', usageRouter(deps));
+    app.use(scansRouter(deps));
     app.use('/admin', adminRouter(deps));
   }
 
