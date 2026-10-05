@@ -11,12 +11,17 @@
     "test": "vitest run",
     "test:samples": "echo 'test:samples todavia no existe: lo crea T1.9' && exit 0",
     "start": "tsx src/index.ts",
+    "build": "node scripts/build.mjs",
+    "start:prod": "node dist/index.js",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed/run.ts",
     "seed:review": "tsx scripts/seed-review.ts",
     "qr:inspect": "tsx scripts/qr-inspect.ts",
-    "scan:one": "tsx scripts/scan-one.ts"
+    "scan:one": "tsx scripts/scan-one.ts",
+    "db:migrate:prod": "node dist/db/migrate.js",
+    "db:seed:prod": "node dist/db/seed/run.js",
+    "seed:review:prod": "node dist/scripts/seed-review.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
@@ -43,6 +48,7 @@
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
     "drizzle-kit": "^0.31.11",
+    "esbuild": "^0.28.2",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15"
   }

@@ -1,0 +1,18 @@
+# Configuración de Replit para el backend (staging/producción). Ver docs/deploy.md.
+# Francisco debe confirmar en la interfaz de Replit lo marcado en docs/deploy.md.
+modules = ["nodejs-20"]
+run = "node server/dist/index.js"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+# Reserved VM (no Autoscale): la cola de escaneos vive en el proceso.
+deploymentTarget = "gce"
+build = ["sh", "-c", "npm ci && npm run build -w server && npm run db:migrate:prod -w server && npm run db:seed:prod -w server"]
+run = ["sh", "-c", "node server/dist/index.js"]
+
+# El servidor lee PORT; Replit lo inyecta en el deploy.
+[[ports]]
+localPort = 3000
+externalPort = 80
