@@ -10,3 +10,5 @@ export * from './numbers.js';
 export * from './dates.js';
 export * from './documents.js';
 export * from './pricing.js';
+export * from './theme.js';
+export type * from './api.js';
