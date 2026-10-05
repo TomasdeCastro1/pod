@@ -106,7 +106,9 @@ describe('GET /files/:scanId/:variant', () => {
 
   it('firma alterada o variante cambiada da 403', async () => {
     const url = pathOf(signImageUrl(config, scanId, 'image'));
-    expect((await request(app).get(url.replace(/sig=./, 'sig=0'))).status).toBe(403);
+    // Cambia el primer carácter de la firma por otro distinto (si ya era '0', reemplazarlo por '0' no la alteraba).
+    const tampered = url.replace(/sig=(.)/, (_m, c: string) => `sig=${c === '0' ? '1' : '0'}`);
+    expect((await request(app).get(tampered)).status).toBe(403);
     expect((await request(app).get(url.replace('/image', '/thumb'))).status).toBe(403);
     expect((await request(app).get(`/files/${scanId}/image`)).status).toBe(403);
   });
