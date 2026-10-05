@@ -25,6 +25,7 @@ const config: ExpoConfig = {
     'expo-secure-store',
     'expo-sqlite',
     'expo-sharing',
+    '@react-native-community/datetimepicker',
     [
       'react-native-document-scanner-plugin',
       { cameraPermission: 'Para fotografiar los comprobantes firmados en cada entrega' },
