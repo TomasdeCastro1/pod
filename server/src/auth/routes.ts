@@ -1,10 +1,10 @@
 import { createHash, randomInt, timingSafeEqual } from 'node:crypto';
-import { and, eq, isNull, sql } from 'drizzle-orm';
+import { and, eq, inArray, isNull, sql } from 'drizzle-orm';
 import { Router } from 'express';
 import { rateLimit } from 'express-rate-limit';
 import { z } from 'zod';
 import { HttpError, type AppDeps } from '../app.js';
-import { companies, memberships, otpCodes, users } from '../db/schema.js';
+import { auditLog, companies, memberships, otpCodes, users } from '../db/schema.js';
 import { createEmailSender } from '../email/index.js';
 import { requireAuth, signToken } from '../middleware/requireAuth.js';
 
@@ -194,6 +194,78 @@ export function meRouter(deps: AppDeps): Router {
       user: { ...user, nombre },
       companies: await userWithCompanies(db, user.id),
     });
+  });
+
+  /**
+   * Eliminar cuenta (App Store, §4.3). Anonimiza al usuario, borra membresías y códigos OTP y deja
+   * los escaneos en la empresa (§13.3). Si es el único admin de una empresa con más miembros: 409.
+   */
+  router.delete('/', async (req, res) => {
+    const user = req.user!;
+    const blocking = await db.transaction(async (tx) => {
+      const mine = await tx
+        .select({
+          companyId: memberships.companyId,
+          role: memberships.role,
+          nombre: companies.nombre,
+        })
+        .from(memberships)
+        .innerJoin(companies, eq(companies.id, memberships.companyId))
+        .where(eq(memberships.userId, user.id))
+        .orderBy(memberships.companyId);
+      const ids = mine.map((m) => m.companyId);
+      // Bloquea las empresas (en orden, sin deadlocks) para que nadie cambie roles a la vez.
+      for (const id of ids) {
+        await tx.execute(sql`select id from companies where id = ${id} for update`);
+      }
+      const blocked: Array<{ id: string; nombre: string }> = [];
+      if (ids.length > 0) {
+        const all = await tx
+          .select({
+            companyId: memberships.companyId,
+            userId: memberships.userId,
+            role: memberships.role,
+          })
+          .from(memberships)
+          .where(inArray(memberships.companyId, ids));
+        for (const m of mine) {
+          if (m.role !== 'admin') continue;
+          const others = all.filter((r) => r.companyId === m.companyId && r.userId !== user.id);
+          if (others.length > 0 && !others.some((r) => r.role === 'admin')) {
+            blocked.push({ id: m.companyId, nombre: m.nombre });
+          }
+        }
+      }
+      if (blocked.length > 0) return blocked;
+
+      await tx
+        .update(users)
+        .set({ email: `deleted+${user.id}@invalid`, nombre: null, deletedAt: new Date() })
+        .where(eq(users.id, user.id));
+      await tx.delete(memberships).where(eq(memberships.userId, user.id));
+      await tx.delete(otpCodes).where(eq(otpCodes.email, user.email));
+      // Sin datos personales en el detalle (ni el email ni el nombre).
+      if (ids.length === 0) {
+        await tx.insert(auditLog).values({ userId: user.id, action: 'user.delete' });
+      } else {
+        await tx
+          .insert(auditLog)
+          .values(ids.map((companyId) => ({ companyId, userId: user.id, action: 'user.delete' })));
+      }
+      return [];
+    });
+    if (blocking.length > 0) {
+      res.status(409).json({
+        error: {
+          code: 'last_admin',
+          message:
+            'Sos el único administrador de estas empresas. Asigná otro administrador antes de eliminar tu cuenta.',
+          companies: blocking,
+        },
+      });
+      return;
+    }
+    res.status(204).end();
   });
 
   return router;

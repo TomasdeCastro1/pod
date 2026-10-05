@@ -16,6 +16,7 @@ import { usageRouter } from './usage/routes.js';
 import { archiveRouter } from './archive/routes.js';
 import { scansRouter } from './scans/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
+import { legalRouter } from './legal/routes.js';
 import { logger } from './logger.js';
 
 export class HttpError extends Error {
@@ -68,6 +69,8 @@ export function createApp(deps?: AppDeps): Express {
     }
     res.json({ status: 'ok' });
   });
+
+  app.use('/legal', legalRouter());
 
   if (deps) {
     app.use(filesRouter(deps));

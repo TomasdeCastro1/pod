@@ -14,6 +14,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts",
     "db:seed": "tsx src/db/seed/run.ts",
+    "seed:review": "tsx scripts/seed-review.ts",
     "qr:inspect": "tsx scripts/qr-inspect.ts",
     "scan:one": "tsx scripts/scan-one.ts"
   },

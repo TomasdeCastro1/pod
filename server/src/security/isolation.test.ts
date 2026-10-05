@@ -151,6 +151,17 @@ describe('aislamiento entre empresas (404 a un no miembro)', () => {
     expect(me.body.companies).toEqual([]);
   });
 
+  it('DELETE /me no toca a otros usuarios ni a la empresa ajena', async () => {
+    const res = await request(ctx.app).delete('/me').set('Authorization', outsider.auth);
+    expect(res.status).toBe(204);
+    const [c] = await ctx.db.select().from(companies);
+    expect(c!.id).toBe(companyId);
+    const m = await ctx.db.select().from(memberships);
+    expect(m.map((r) => r.userId)).toEqual([ana.id]);
+    const me = await request(ctx.app).get('/me').set('Authorization', ana.auth);
+    expect(me.status).toBe(200);
+  });
+
   it('/admin/* exige ADMIN_TOKEN, no JWT de usuario', async () => {
     for (const [method, path] of [
       ['get', '/admin/usage'],
