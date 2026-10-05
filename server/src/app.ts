@@ -11,6 +11,7 @@ import { companiesRouter } from './companies/routes.js';
 import { adminRouter } from './admin/routes.js';
 import { fieldsRouter } from './fields/routes.js';
 import { usageRouter } from './usage/routes.js';
+import { archiveRouter } from './archive/routes.js';
 import { scansRouter } from './scans/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
 
@@ -57,6 +58,7 @@ export function createApp(deps?: AppDeps): Express {
     app.use('/companies', fieldsRouter(deps));
     app.use('/companies', usageRouter(deps));
     app.use(scansRouter(deps));
+    app.use(archiveRouter(deps));
     app.use('/admin', adminRouter(deps));
   }
 

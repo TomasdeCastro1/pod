@@ -24,7 +24,14 @@ export interface ScanDto {
 }
 
 /** Claves que el QR de DGI aporta (además de las pedidas a la IA). */
-const QR_KEYS = ['rut_emisor', 'tipo_cfe', 'serie', 'numero', 'total', 'fecha_documento'] as const;
+export const QR_KEYS = [
+  'rut_emisor',
+  'tipo_cfe',
+  'serie',
+  'numero',
+  'total',
+  'fecha_documento',
+] as const;
 
 function revisarList(scan: ScanRow): Array<{ campo: string; motivo: string }> {
   const raw = scan.extracted?.revisar;
