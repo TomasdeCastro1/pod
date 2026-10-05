@@ -128,7 +128,13 @@ describe('PATCH /scans/:id', () => {
       .send({ corrections: { cliente_nombre: 'Panadería Lucía', total: '1234,50' } });
     expect(r.status).toBe(200);
     expect(r.body.cliente_nombre).toBe('Panadería Lucía');
-    expect(r.body.fields.cliente_nombre).toEqual({ value: 'Panadería Lucía', corrected: true });
+    expect(r.body.fields.cliente_nombre).toEqual({
+      value: 'Panadería Lucía',
+      corrected: true,
+      original: s.extracted!.cliente_nombre,
+    });
+    expect(r.body.reviewed).toBe(false);
+    expect(r.body.reviewed_at).toBeNull();
     expect((await list('?q=lucía')).body.items).toHaveLength(1);
     expect((await list('?q=Cliente 1')).body.items).toHaveLength(0);
     const [row] = await ctx.db.select().from(scans).where(eq(scans.id, s.id));
@@ -168,11 +174,18 @@ describe('PATCH /scans/:id', () => {
     const s = await insert(1);
     const patch = (reviewed: boolean) =>
       request(ctx.app).patch(`/scans/${s.id}`).set('Authorization', beto.auth).send({ reviewed });
-    expect((await patch(true)).status).toBe(200);
+    const on = await patch(true);
+    expect(on.status).toBe(200);
+    expect(on.body.reviewed).toBe(true);
+    expect(on.body.reviewed_at).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    const got = await request(ctx.app).get(`/scans/${s.id}`).set('Authorization', ana.auth);
+    expect(got.body.reviewed).toBe(true);
     let [row] = await ctx.db.select().from(scans).where(eq(scans.id, s.id));
     expect(row!.reviewedBy).toBe(beto.id);
     expect(row!.reviewedAt).not.toBeNull();
-    await patch(false);
+    const off = await patch(false);
+    expect(off.body.reviewed).toBe(false);
+    expect(off.body.reviewed_at).toBeNull();
     [row] = await ctx.db.select().from(scans).where(eq(scans.id, s.id));
     expect(row!.reviewedBy).toBeNull();
     expect(row!.reviewedAt).toBeNull();

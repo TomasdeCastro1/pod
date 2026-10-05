@@ -99,7 +99,11 @@ export interface ScanDto {
   fecha_documento: string | null;
   total: number | null;
   revisar: Array<{ campo: string; motivo: string }>;
-  fields: Record<string, { value: unknown; corrected: boolean }>;
+  /** `original` es el valor leído (IA o QR); solo viene cuando `corrected` es true. */
+  fields: Record<string, { value: unknown; corrected: boolean; original?: unknown }>;
+  reviewed: boolean;
+  /** ISO o null. */
+  reviewed_at: string | null;
   captured_at: string;
   thumb_url: string | null;
   alert: ScanAlert | null;

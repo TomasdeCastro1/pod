@@ -3,8 +3,12 @@ import type { PatchScanBody, Role, ScanDto } from '@app/shared';
 import { CONFORMIDAD_LABELS } from '../theme';
 import { CONFORMIDAD_ORDER } from './filters';
 
-/** El DTO podría traer `reviewed` (hoy el servidor no lo manda; ver informe de T4.2). */
-export type DetailScan = ScanDto & { reviewed?: boolean };
+export type DetailScan = ScanDto;
+
+/** Valor original leído de un campo corregido, como texto; null si no hay corrección. */
+export function originalText(key: string, f: ScanDto['fields'][string]): string | null {
+  return f.corrected ? displayValue(key, f.original) : null;
+}
 
 export type FieldKind = 'text' | 'date' | 'number' | 'rut' | 'conformidad' | 'list';
 

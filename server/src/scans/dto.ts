@@ -17,7 +17,9 @@ export interface ScanDto {
   fecha_documento: string | null;
   total: number | null;
   revisar: Array<{ campo: string; motivo: string }>;
-  fields: Record<string, { value: unknown; corrected: boolean }>;
+  fields: Record<string, { value: unknown; corrected: boolean; original?: unknown }>;
+  reviewed: boolean;
+  reviewed_at: string | null;
   captured_at: string;
   thumb_url: string | null;
   alert: ScanAlert | null;
@@ -69,7 +71,9 @@ export function toScanDto(scan: ScanRow, thumbUrl: string | null = null): ScanDt
     let value = effectiveValue(scan, key);
     if (value === undefined) value = scan.qrData?.[key];
     if (value === undefined) continue;
-    fields[key] = { value, corrected };
+    fields[key] = corrected
+      ? { value, corrected, original: scan.extracted?.[key] ?? scan.qrData?.[key] ?? null }
+      : { value, corrected };
   }
 
   return {
@@ -85,6 +89,8 @@ export function toScanDto(scan: ScanRow, thumbUrl: string | null = null): ScanDt
     total: scan.total === null ? null : Number(scan.total),
     revisar,
     fields,
+    reviewed: scan.reviewedAt !== null,
+    reviewed_at: scan.reviewedAt ? scan.reviewedAt.toISOString() : null,
     captured_at: scan.capturedAt.toISOString(),
     thumb_url: thumbUrl,
     alert: scanAlert(scan, revisar),

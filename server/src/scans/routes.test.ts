@@ -157,6 +157,8 @@ describe('POST /companies/:id/scans y GET /scans/:id', () => {
       fecha_documento: '2026-09-24',
       total: 1727.91,
       revisar: [],
+      reviewed: false,
+      reviewed_at: null,
       captured_at: '2026-09-24T12:00:00.000Z',
       alert: null,
     });
@@ -272,7 +274,12 @@ describe('alertas', () => {
       .set({ corrections: { cliente_rut: '111' } })
       .where(eqId(id));
     const r = await request(ctx.app).get(`/scans/${id}`).set('Authorization', ana.auth);
-    expect(r.body.fields.cliente_rut).toEqual({ value: '111', corrected: true });
+    expect(r.body.fields.cliente_rut).toEqual({
+      value: '111',
+      corrected: true,
+      original: '216981070018',
+    });
+    expect(r.body.fields.numero).not.toHaveProperty('original');
   });
 });
 

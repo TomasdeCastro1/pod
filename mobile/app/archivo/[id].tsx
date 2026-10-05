@@ -28,6 +28,7 @@ import {
   fieldKind,
   itemsTable,
   orderFieldKeys,
+  originalText,
   type DetailScan,
 } from '../../src/archive/edit';
 import { shareScanImage } from '../../src/archive/files';
@@ -104,14 +105,12 @@ export default function ScanDetailScreen() {
     return { labels, order };
   }, [catalogQuery.data]);
 
-  // Estado de «revisado»: el DTO actual no lo trae, se recuerda lo que se hizo en esta pantalla.
-  const [reviewedLocal, setReviewedLocal] = useState<boolean | null>(null);
+  const [showOriginal, setShowOriginal] = useState<Record<string, boolean>>({});
 
   const patch = useMutation({
     mutationFn: (body: PatchScanBody) => api.scans.patch(id!, body),
-    onSuccess: (scan, body) => {
+    onSuccess: (scan) => {
       queryClient.setQueryData(['scan', id], scan);
-      if (body.reviewed !== undefined) setReviewedLocal(body.reviewed);
       void queryClient.invalidateQueries({ queryKey: ['scans'] });
     },
   });
@@ -126,7 +125,7 @@ export default function ScanDetailScreen() {
   });
 
   const scan: DetailScan | undefined = scanQuery.data;
-  const reviewed = reviewedLocal ?? scan?.reviewed ?? false;
+  const reviewed = scan?.reviewed ?? false;
 
   const startEdit = (key: string, value: unknown) => {
     setEditing(key);
@@ -307,6 +306,22 @@ export default function ScanDetailScreen() {
               ) : (
                 <Text style={styles.value}>{displayValue(key, f.value)}</Text>
               )}
+              {f.corrected && !isEditing && kind !== 'list' ? (
+                <View>
+                  <Pressable
+                    accessibilityRole="button"
+                    onPress={() => setShowOriginal((s) => ({ ...s, [key]: !s[key] }))}
+                    hitSlop={8}
+                  >
+                    <Text style={styles.link}>
+                      {showOriginal[key] ? 'Ocultar valor original' : 'Ver valor original'}
+                    </Text>
+                  </Pressable>
+                  {showOriginal[key] ? (
+                    <Text style={styles.original}>Leído: {originalText(key, f)}</Text>
+                  ) : null}
+                </View>
+              ) : null}
             </View>
           );
         })}
@@ -376,6 +391,7 @@ const styles = StyleSheet.create({
   },
   link: { fontSize: 15, fontWeight: '600', color: colors.primary },
   value: { fontSize: 17, color: colors.text },
+  original: { fontSize: 15, color: colors.textMuted, marginTop: 4 },
   input: {
     borderWidth: 1,
     borderColor: colors.border,

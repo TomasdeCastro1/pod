@@ -24,6 +24,8 @@ function dto(p: Partial<ScanDto> = {}): ScanDto {
     total: null,
     revisar: [],
     fields: {},
+    reviewed: false,
+    reviewed_at: null,
     captured_at: '2026-01-01T00:00:00.000Z',
     thumb_url: null,
     alert: null,

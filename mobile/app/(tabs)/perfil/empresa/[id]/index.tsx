@@ -1,5 +1,6 @@
 import { isValidRut, normalizeRut, type Member, type Role } from '@app/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
+import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Share, Text, View } from 'react-native';
@@ -42,6 +43,12 @@ export default function EmpresaScreen() {
   const [memberError, setMemberError] = useState('');
   const [saving, setSaving] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const copyCode = async (value: string) => {
+    await Clipboard.setStringAsync(value);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   useEffect(() => {
     if (company.data) {
@@ -215,15 +222,26 @@ export default function EmpresaScreen() {
         </View>
       </Card>
       {code ? (
-        <Button
-          title="Compartir"
-          variant="secondary"
-          onPress={() =>
-            void Share.share({
-              message: `Unite a ${mine.nombre} en la app con este código de invitación: ${code}`,
-            })
-          }
-        />
+        <View style={{ flexDirection: 'row', gap: 10 }}>
+          <View style={{ flex: 1 }}>
+            <Button
+              title={copied ? 'Copiado' : 'Copiar'}
+              variant="secondary"
+              onPress={() => void copyCode(code)}
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Compartir"
+              variant="secondary"
+              onPress={() =>
+                void Share.share({
+                  message: `Unite a ${mine.nombre} en la app con este código de invitación: ${code}`,
+                })
+              }
+            />
+          </View>
+        </View>
       ) : null}
       {perms.canRegenerateCode ? (
         <Button title="Regenerar" variant="link" onPress={regenerate} disabled={busy} />

@@ -8,6 +8,7 @@ import {
   editorText,
   itemsTable,
   orderFieldKeys,
+  originalText,
   parseFieldInput,
 } from './edit';
 
@@ -106,5 +107,15 @@ describe('presentación', () => {
       'total',
       'zeta',
     ]);
+  });
+});
+
+describe('valor original', () => {
+  it('solo se muestra si el campo está corregido', () => {
+    expect(originalText('total', { value: 5, corrected: true, original: 1727.91 })).toBe(
+      displayValue('total', 1727.91),
+    );
+    expect(originalText('local', { value: 'x', corrected: true, original: null })).toBe('—');
+    expect(originalText('local', { value: 'x', corrected: false })).toBeNull();
   });
 });
