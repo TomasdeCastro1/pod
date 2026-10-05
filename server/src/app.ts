@@ -7,6 +7,9 @@ import type { Db } from './db/client.js';
 import type { ObjectStore } from './storage/index.js';
 import { authRouter, meRouter } from './auth/routes.js';
 import { companiesRouter } from './companies/routes.js';
+import { adminRouter } from './admin/routes.js';
+import { fieldsRouter } from './fields/routes.js';
+import { usageRouter } from './usage/routes.js';
 import { filesRouter } from './storage/signedUrl.js';
 
 export class HttpError extends Error {
@@ -47,6 +50,9 @@ export function createApp(deps?: AppDeps): Express {
     app.use('/auth', authRouter(deps));
     app.use('/me', meRouter(deps));
     app.use('/companies', companiesRouter(deps));
+    app.use('/companies', fieldsRouter(deps));
+    app.use('/companies', usageRouter(deps));
+    app.use('/admin', adminRouter(deps));
   }
 
   app.use((_req, _res, next) => {

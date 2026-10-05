@@ -10,6 +10,7 @@ import type { ObjectStore } from '../storage/index.js';
 export const testConfig = {
   JWT_SECRET: 'test-secret',
   SIGNED_URL_SECRET: 's',
+  ADMIN_TOKEN: 'test-admin-token',
   EMAIL_DRIVER: 'console',
   PORT: 3000,
 } as unknown as Config;
